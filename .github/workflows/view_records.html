@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECG Help Desk - View Records</title>
+    <style>
+        :root {
+            --primary: #19335a;
+            --secondary: #ffbf00;
+            --accent: #388e3c;
+        }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: #f2f5fa;
+        }
+        h1 {
+            color: var(--primary);
+        }
+        .tools {
+            background: #fff;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .tools h2 {
+            margin-top: 0;
+            color: var(--primary);
+        }
+        button {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            padding: 0.7rem 1.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+        button:hover {
+            background: #132640;
+        }
+        button.delete-btn {
+            background: #d32f2f;
+        }
+        button.delete-btn:hover {
+            background: #b71c1c;
+        }
+        button.export-btn {
+            background: var(--accent);
+        }
+        button.export-btn:hover {
+            background: #2e7d32;
+        }
+        .stats {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, var(--primary), #2a4a7a);
+            color: #fff;
+            padding: 1rem;
+            border-radius: 8px;
+            flex: 1;
+        }
+        .stat-card h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        .stat-card .number {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e8ed;
+        }
+        th {
+            background: var(--primary);
+            color: #fff;
+            font-weight: 600;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        .status-badge {
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .status-new {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        .message {
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        .message.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-left: 4px solid #2e7d32;
+        }
+        .message.error {
+            background: #ffebee;
+            color: #c62828;
+            border-left: 4px solid #c62828;
+        }
+        .search-box {
+            padding: 0.7rem;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            width: 100%;
+            font-size: 1rem;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .action-buttons button {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>ECG Help Desk - Records Management</h1>
+    
+    <div id="message" class="message"></div>
+    
+    <div class="tools">
+        <h2>Management Tools</h2>
+        <div class="stats">
+            <div class="stat-card">
+                <h3>Total Records</h3>
+                <div class="number" id="totalCount">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>This Month</h3>
+                <div class="number" id="monthCount">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Today</h3>
+                <div class="number" id="todayCount">0</div>
+            </div>
+        </div>
+        
+        <input type="text" class="search-box" id="searchBox" placeholder="Search by vendor name, location, phone, or issue...">
+        
+        <button onclick="refreshRecords()">🔄 Refresh</button>
+        <button class="export-btn" onclick="exportToCSV()">📊 Export to CSV</button>
+        <button class="delete-btn" onclick="clearAllRecords()">🗑️ Clear All Records</button>
+        <button onclick="showDeveloperAccess()">🔐 Show Developer Access</button>
+    </div>
+
+    <div class="tools">
+        <h2>Developer Access Information</h2>
+        <p><strong>Storage Key:</strong> <code>ecg_helpdesk_records</code></p>
+        <p><strong>Storage Location:</strong> Browser LocalStorage</p>
+        <p><strong>Access Methods:</strong></p>
+        <ul>
+            <li><strong>Developer Access Code:</strong> <code>letmein</code></li>
+            <li><strong>Session Flag:</strong> Set <code>sessionStorage.setItem('ecg_dev_access', 'true')</code> in browser console</li>
+            <li><strong>Alternative Codes:</strong> DEV-ECG-2024-ALPHA, ECG-DEV-ADMIN-001, ECG-IT-DEV-ACCESS</li>
+        </ul>
+    </div>
+
+    <div style="overflow-x: auto;">
+        <table id="recordsTable">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Vendor Name</th>
+                    <th>Location</th>
+                    <th>Issue</th>
+                    <th>Phone</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="recordsBody">
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 2rem; color: #888;">
+                        Loading records...
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Backend API configuration - auto-detect based on environment
+        const BACKEND_URL = window.location.origin;
+        
+        // Get developer token from sessionStorage
+        function getDevToken() {
+            return sessionStorage.getItem('ecg_dev_token') || '';
+        }
+
+        // Check if user is authenticated as developer
+        async function checkAuth() {
+            const token = getDevToken();
+            if (!token) {
+                const code = prompt('Enter developer access code to manage records:');
+                if (!code) return false;
+                
+                try {
+                    const res = await fetch(`${BACKEND_URL}/api/dev-login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ code })
+                    });
+                    
+                    if (!res.ok) {
+                        showMessage('Invalid developer code!', 'error');
+                        return false;
+                    }
+                    
+                    const data = await res.json();
+                    sessionStorage.setItem('ecg_dev_token', data.token);
+                    sessionStorage.setItem('ecg_dev_access', 'true');
+                    showMessage('Developer access granted!', 'success');
+                    return true;
+                } catch (error) {
+                    showMessage('Error connecting to server. Make sure the backend is running!', 'error');
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function showMessage(text, type) {
+            const msg = document.getElementById('message');
+            msg.textContent = text;
+            msg.className = `message ${type}`;
+            msg.style.display = 'block';
+            setTimeout(() => {
+                msg.style.display = 'none';
+            }, 3000);
+        }
+
+        // Load records from backend API
+        async function loadRecords() {
+            try {
+                const token = getDevToken();
+                const res = await fetch(`${BACKEND_URL}/api/records`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (res.status === 401) {
+                    // Unauthorized - prompt for login
+                    if (await checkAuth()) {
+                        return loadRecords(); // Retry after authentication
+                    }
+                    return [];
+                }
+                
+                if (!res.ok) throw new Error('Failed to load records');
+                return await res.json();
+            } catch (error) {
+                console.error('Error loading records:', error);
+                showMessage('Error loading records. Make sure the backend server is running!', 'error');
+                return [];
+            }
+        }
+
+        // Load statistics from backend
+        async function loadStats() {
+            try {
+                const token = getDevToken();
+                const res = await fetch(`${BACKEND_URL}/api/stats`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (res.status === 401) {
+                    if (await checkAuth()) {
+                        return loadStats();
+                    }
+                    return { total: 0, today: 0, thisMonth: 0 };
+                }
+                
+                if (!res.ok) throw new Error('Failed to load stats');
+                return await res.json();
+            } catch (error) {
+                console.error('Error loading stats:', error);
+                return { total: 0, today: 0, thisMonth: 0 };
+            }
+        }
+
+        async function refreshRecords(searchTerm = '') {
+            const tbody = document.getElementById('recordsBody');
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem; color: #888;">Loading records...</td></tr>';
+            
+            // Load stats
+            const stats = await loadStats();
+            document.getElementById('totalCount').textContent = stats.total || 0;
+            document.getElementById('todayCount').textContent = stats.today || 0;
+            document.getElementById('monthCount').textContent = stats.thisMonth || 0;
+            
+            // Load records
+            const records = await loadRecords();
+            
+            // Filter records if search term provided
+            let filteredRecords = records;
+            if (searchTerm) {
+                const term = searchTerm.toLowerCase();
+                filteredRecords = records.filter(record => 
+                    (record.vendorName || '').toLowerCase().includes(term) ||
+                    (record.location || '').toLowerCase().includes(term) ||
+                    (record.phone || '').toLowerCase().includes(term) ||
+                    (record.issue || '').toLowerCase().includes(term)
+                );
+            }
+            
+            // Display records
+            if (filteredRecords.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 2rem; color: #888;">
+                            ${records.length === 0 ? 'No records found. Submit an issue on the main page.' : 'No records match your search.'}
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = '';
+            filteredRecords.slice().reverse().forEach((record, idx) => {
+                const tr = document.createElement('tr');
+                const recordId = record.id;
+                const displayDate = record.date ? new Date(record.date).toLocaleString() : record.date;
+                
+                tr.innerHTML = `
+                    <td>${idx + 1}</td>
+                    <td>${escapeHtml(record.vendorName || '')}</td>
+                    <td>${escapeHtml(record.location || '')}</td>
+                    <td style="max-width: 300px; word-wrap: break-word;">${escapeHtml(record.issue || '')}</td>
+                    <td>${escapeHtml(record.phone || '')}</td>
+                    <td>${escapeHtml(displayDate)}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button onclick="viewRecord('${recordId}')">👁️ View</button>
+                            <button onclick="sendSMS('${recordId}')">📱 SMS</button>
+                            <button onclick="sendWhatsApp('${recordId}')">💬 WhatsApp</button>
+                            <button class="delete-btn" onclick="deleteRecord('${recordId}')">🗑️</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function escapeHtml(text) {
+            if (text == null) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        async function viewRecord(id) {
+            const records = await loadRecords();
+            const record = records.find(r => r.id == id);
+            if (record) {
+                const displayDate = record.date ? new Date(record.date).toLocaleString() : record.date;
+                alert(`Vendor: ${record.vendorName}\nLocation: ${record.location}\nPhone: ${record.phone}\nIssue: ${record.issue}\nDate: ${displayDate}`);
+            }
+        }
+
+        async function sendSMS(id) {
+            const records = await loadRecords();
+            const record = records.find(r => r.id == id);
+            if (record) {
+                const phone = formatGhanaPhone(record.phone);
+                const msg = encodeURIComponent(
+                    `Hello ${record.vendorName},\nYour issue has been received by ECG IT Help Desk:\n"${record.issue}"\nWe will assist you shortly.\n\n- Electricity Company of Ghana`
+                );
+                window.location.href = `sms:${phone}?body=${msg}`;
+            }
+        }
+
+        async function sendWhatsApp(id) {
+            const records = await loadRecords();
+            const record = records.find(r => r.id == id);
+            if (record) {
+                const phone = formatGhanaPhone(record.phone).replace('+', '');
+                const msg = encodeURIComponent(
+                    `Hello ${record.vendorName},\nYour issue has been received by ECG IT Help Desk:\n"${record.issue}"\nWe will assist you shortly.\n\n- Electricity Company of Ghana`
+                );
+                window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
+            }
+        }
+
+        function formatGhanaPhone(phone) {
+            let p = String(phone).replace(/\s+/g, '');
+            if (p.startsWith('0')) {
+                return '+233' + p.slice(1);
+            }
+            if (p.startsWith('+233')) {
+                return p;
+            }
+            return p;
+        }
+
+        async function deleteRecord(id) {
+            if (!confirm('Are you sure you want to delete this record?')) return;
+            
+            try {
+                const token = getDevToken();
+                const res = await fetch(`${BACKEND_URL}/api/records/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (res.status === 401) {
+                    if (await checkAuth()) {
+                        return deleteRecord(id); // Retry after authentication
+                    }
+                    return;
+                }
+                
+                if (!res.ok) throw new Error('Failed to delete record');
+                
+                showMessage('Record deleted successfully!', 'success');
+                refreshRecords(document.getElementById('searchBox').value);
+            } catch (error) {
+                showMessage('Error deleting record!', 'error');
+            }
+        }
+
+        async function exportToCSV() {
+            const records = await loadRecords();
+            if (records.length === 0) {
+                showMessage('No records to export!', 'error');
+                return;
+            }
+            
+            let csv = 'Vendor Name,Location,Phone,Issue,Date\n';
+            records.forEach(record => {
+                const displayDate = record.date ? new Date(record.date).toLocaleString() : record.date;
+                csv += `"${escapeHtml(record.vendorName || '')}","${escapeHtml(record.location || '')}","${escapeHtml(record.phone || '')}","${escapeHtml(record.issue || '')}","${displayDate}"\n`;
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ecg_records_${new Date().toISOString().slice(0, 10)}.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+            
+            showMessage('Records exported successfully!', 'success');
+        }
+
+        async function clearAllRecords() {
+            if (!confirm('⚠️ WARNING: Are you absolutely sure you want to delete ALL records? This cannot be undone!')) return;
+            if (!confirm('Last chance! This will delete EVERYTHING. Click OK to confirm.')) return;
+            
+            try {
+                const records = await loadRecords();
+                const token = getDevToken();
+                
+                // Delete each record
+                for (const record of records) {
+                    await fetch(`${BACKEND_URL}/api/records/${record.id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                }
+                
+                showMessage('All records have been cleared!', 'success');
+                refreshRecords();
+            } catch (error) {
+                showMessage('Error clearing records!', 'error');
+            }
+        }
+
+        function showDeveloperAccess() {
+            alert(`Developer Access Information:\n\n` +
+                  `1. Access Codes:\n` +
+                  `   - letmein\n` +
+                  `   - DEV-ECG-2024-ALPHA\n` +
+                  `   - ECG-DEV-ADMIN-001\n` +
+                  `   - ECG-IT-DEV-ACCESS\n\n` +
+                  `2. Backend API: ${BACKEND_URL}\n` +
+                  `3. Token stored in: sessionStorage.getItem('ecg_dev_token')\n\n` +
+                  `Note: Backend server must be running on port 3000`);
+        }
+
+        // Search functionality
+        document.getElementById('searchBox').addEventListener('input', function(e) {
+            refreshRecords(e.target.value);
+        });
+
+        // Initial load - check authentication first
+        (async function() {
+            if (await checkAuth()) {
+                refreshRecords();
+            } else {
+                document.getElementById('recordsBody').innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 2rem; color: #888;">
+                            Developer authentication required. Refresh and enter access code.
+                        </td>
+                    </tr>
+                `;
+            }
+        })();
+
+        // Auto-refresh every 30 seconds
+        setInterval(async () => {
+            if (getDevToken()) {
+                await refreshRecords(document.getElementById('searchBox').value);
+            }
+        }, 30000);
+    </script>
+</body>
+</html>
+

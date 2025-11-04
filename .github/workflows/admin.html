@@ -1,0 +1,83 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>ECG Helpdesk - Admin Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+    th, td { border: 1px solid #ddd; padding: 8px; }
+    th { background: #f4f4f4; }
+    .controls { margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Admin Dashboard</h1>
+  <div class="controls">
+    <button id="btnRefresh">Refresh</button>
+    <button id="btnLogout">Logout</button>
+    <span id="userInfo"></span>
+  </div>
+
+  <h2>Tickets</h2>
+  <table id="ticketsTable">
+    <thead><tr><th>ID</th><th>Vendor</th><th>Subject</th><th>Status</th><th>Assigned To</th><th>Attachment</th><th>Actions</th></tr></thead>
+    <tbody></tbody>
+  </table>
+
+  <h2>Vendors</h2>
+  <input id="vendorSearch" placeholder="Search vendors..." />
+  <button id="btnSearchVendor">Search</button>
+  <table id="vendorsTable">
+    <thead><tr><th>ID</th><th>Name</th><th>Contact</th><th>Phone</th><th>Email</th></tr></thead>
+    <tbody></tbody>
+  </table>
+
+  <script src="script.js"></script>
+  <script>
+    async function renderTickets() {
+      const tickets = await fetchTickets();
+      const tbody = document.querySelector('#ticketsTable tbody');
+      tbody.innerHTML = '';
+      tickets.forEach(t => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${t.id}</td><td>${t.vendor_id || ''}</td><td>${t.subject}</td><td>${t.status}</td><td>${t.assigned_to || ''}</td><td>${t.attachment ? '<a href="'+t.attachment+'" target="_blank">View</a>' : ''}</td>
+        <td><button data-id="${t.id}" class="btnClose">Close</button> <button data-id="${t.id}" class="btnAssign">Assign</button></td>`;
+        tbody.appendChild(tr);
+      });
+      document.querySelectorAll('.btnClose').forEach(b=>b.addEventListener('click', async (e)=>{
+        const id = e.target.dataset.id; await updateTicketStatus(id, 'closed'); await renderTickets();
+      }));
+      document.querySelectorAll('.btnAssign').forEach(b=>b.addEventListener('click', async (e)=>{
+        const id = e.target.dataset.id; const name = prompt('Assign to (name/email):'); if (name) { await assignTicket(id, name); await renderTickets(); }
+      }));
+    }
+    async function renderVendors(list) {
+      const tbody = document.querySelector('#vendorsTable tbody');
+      tbody.innerHTML = '';
+      (list || []).forEach(v=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${v.VendorID}</td><td>${v.VendorName}</td><td>${v.ContactPerson||''}</td><td>${v.Phone||''}</td><td>${v.Email||''}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    document.getElementById('btnRefresh').addEventListener('click', async ()=>{ await renderTickets(); const vendors = await fetchVendors(); renderVendors(vendors); });
+    document.getElementById('btnSearchVendor').addEventListener('click', async ()=>{ const q=document.getElementById('vendorSearch').value; const list = await searchVendors(q); renderVendors(list); });
+    document.getElementById('btnLogout').addEventListener('click', ()=>{ localStorage.removeItem('ecg_token'); alert('Logged out'); location.reload(); });
+
+    (async ()=>{
+      const token = localStorage.getItem('ecg_token');
+      if (!token) {
+        document.getElementById('userInfo').innerText = 'Not logged in. Use Admin Login panel on main site.';
+        return;
+      } else {
+        document.getElementById('userInfo').innerText = 'Logged in';
+      }
+      await renderTickets();
+      const vendors = await fetchVendors();
+      renderVendors(vendors);
+    })();
+  </script>
+</body>
+</html>

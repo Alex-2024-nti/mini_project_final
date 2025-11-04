@@ -1,0 +1,1454 @@
+<!-- 
+    Backend Integration
+    ------------------
+    NOTE: This is a *front-end* HTML file. For full backend functionality, you typically need a server (Node.js, Python Flask, PHP, etc.).
+    Below is a simulated backend interaction using JavaScript Fetch API and example backend endpoints.
+    Replace the URLs ("/api/register", "/api/login") with those of your backend.
+
+    Example: Minimal backend (Node.js/Express) setup needed:
+    ----------------------------------------------------------
+    POST /api/register   -- Register a new user
+    POST /api/login      -- Login user
+    GET  /api/session    -- Check user session
+
+    You must implement these endpoints on your server for full functionality.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ECG Help Desk</title>
+    <link rel="icon" type="image/png" href="main1.jfif">
+    <style>
+        :root {
+            --primary: #19335a;
+            --secondary: #ffbf00;
+            --accent: #388e3c;
+        }
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+            background: #f2f5fa;
+            color: #19335a;
+            box-sizing: border-box;
+            min-height: 100vh;
+        }
+        header {
+            background: var(--primary);
+            color: #fff;
+            padding: 1.2rem 1rem 0.9rem 1rem;
+            text-align: center;
+        }
+        .ecg-logo {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin-bottom: 0.5rem;
+        }
+        .motto {
+            font-size: 1.1rem;
+            font-style: italic;
+            color: var(--secondary);
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        .container {
+            margin: 0 auto;
+            max-width: 420px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 3px 18px rgba(60,64,67,0.1);
+            padding: 1.2rem 1rem 2rem 1rem;
+            margin-top: 1.2rem;
+        }
+        h1, h2 {
+            margin: 0.5rem 0;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        form label {
+            font-weight: 500;
+        }
+        form input, form textarea {
+            padding: 0.7rem;
+            border-radius: 6px;
+            border: 1px solid #bacbe6;
+            outline: none;
+            font-size: 1rem;
+            margin-top: 0.25rem;
+            font-family: inherit;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        form input:focus, form textarea:focus {
+            border: 1.4px solid var(--primary);
+            background: #e6f0ff;
+        }
+        button[type="submit"] {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            padding: 0.9rem 0;
+            border-radius: 6px;
+            font-size: 1.07rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+            cursor: pointer;
+            box-shadow: 0 2px 7px rgba(25,51,90,0.09);
+        }
+        button[type="submit"]:active {
+            background: #132640;
+        }
+        .message {
+            text-align: center;
+            margin-top: 0.7rem;
+            font-weight: 500;
+            border-radius: 5px;
+            padding: 0.6rem 0.9rem;
+        }
+        .records {
+            margin-top: 2.2rem;
+            background: #fafafb;
+            border-radius: 10px;
+            padding: 0.9rem 0.5rem 1rem 0.5rem;
+            box-shadow: 0 0.5px 4px #d3dbe6;
+        }
+        .records h2 {
+            text-align: center;
+            margin-bottom: 1rem;
+            font-size: 1.08rem;
+        }
+        #recordsTable {
+            width: 100%;
+            border-collapse: collapse;
+            overflow-x: auto;
+            font-size: 0.99rem;
+        }
+        #recordsTable th, #recordsTable td {
+            padding: 0.45rem 0.3rem;
+            border-bottom: 1px solid #e5e8ed;
+            text-align: left;
+        }
+        #recordsTable th {
+            background: #f7f9fb;
+            color: var(--primary);
+        }
+        #recordsTable tr:last-child td {
+            border-bottom: none;
+        }
+        .footer {
+            background: var(--primary);
+            color: #fff;
+            text-align: center;
+            padding: 1.2rem 0;
+            margin-top: 2.5rem;
+            border-top-left-radius: 18px;
+            border-top-right-radius: 18px;
+        }
+        .footer img {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: contain;
+            background: #fff;
+            border: 2px solid var(--secondary);
+            margin-bottom: 0.5rem;
+        }
+        .footer-motto {
+            font-size: 1.04rem;
+            font-style: italic;
+            color: var(--secondary);
+            margin: 0.3rem 0 0.2rem 0;
+            font-weight: 500;
+        }
+        .footer-vision {
+            font-size: 0.98rem;
+            color: #e3f2fd;
+            margin: 0.2rem 0 0 0;
+        }
+        /* Responsive Design for Mobile */
+        @media (max-width: 600px) {
+            .container {
+                max-width: 98vw;
+                padding: 1rem 0.4rem 1.3rem 0.4rem;
+            }
+            .records {
+                padding: 0.8rem 0.1rem 1rem 0.1rem;
+            }
+            #recordsTable th, #recordsTable td {
+                font-size: 0.97rem;
+                padding: 0.39rem 0.09rem;
+            }
+            header, .footer {
+                padding-left: 0.2rem;
+                padding-right: 0.2rem;
+            }
+        }
+        /* Make table scrollable horizontally if overflow */
+        .records {
+            overflow-x: auto;
+        }
+        #recordsTable {
+            min-width: 410px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="main1.jfif" alt="ECG Logo" class="ecg-logo">
+        <h1>Electricity Company of Ghana</h1>
+        <div class="motto">"Your Power, Our Priority"</div>
+        <p>IT Department Help Desk</p>
+    </header>
+    <div class="container">
+        <div class="vision-section">
+            <div class="vision-title" style="font-weight:600; font-size:1.11rem;">Our Vision</div>
+            <div class="vision-text" style="color:#555; font-size:0.97rem;">
+                To be among the leading electricity distribution companies in Africa, delivering reliable and quality power to support Ghana’s growth and development.
+            </div>
+        </div>
+        <div class="motto" style="text-align:center;">
+            Motto: "Your Power, Our Priority"
+        </div>
+        <h2>Submit an Issue</h2>
+        <form id="issueForm" autocomplete="off">
+            <div>
+                <label for="vendorName">Vendor Name</label>
+                <input type="text" id="vendorName" name="vendorName" required maxlength="50" placeholder="Enter your name">
+            </div>
+            <div>
+                <label for="location">Location</label>
+                <input type="text" id="location" name="location" required maxlength="50" placeholder="Enter your location">
+            </div>
+            <div>
+                <label for="phone">Phone Number <span style="font-weight:normal;font-size:0.95em;">(for SMS/WhatsApp response)</span></label>
+                <input type="tel" id="phone" name="phone" required pattern="^(\+233|0)[0-9]{9}$" maxlength="13" placeholder="e.g. 0241234567 or +233241234567">
+            </div>
+            <div>
+                <label for="issue">Issue</label>
+                <textarea id="issue" name="issue" required maxlength="300" rows="3" placeholder="Describe your issue"></textarea>
+            </div>
+            <button type="submit">Submit Issue</button>
+        </form>
+        <div id="formMessage" class="message" style="display:none;"></div>
+        <div class="records">
+            <h2>Submitted Records</h2>
+            <div style="overflow-x:auto;">
+                <table id="recordsTable">
+                    <thead>
+                        <tr>
+                            <th>Vendor Name</th>
+                            <th>Location</th>
+                            <th>Issue</th>
+                            <th>Phone</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Records will be inserted here by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <img src="main1.jfif" alt="ECG Logo">
+        <div class="footer-motto">Your Power, Our Priority</div>
+        <div class="footer-vision">Empowering Ghana’s future, one light at a time.</div>
+        <div style="margin-top:0.6rem; font-size:0.91rem;">&copy; <span id="currentYear"></span> Electricity Company of Ghana</div>
+    </footer>
+    <script>
+        // Dynamic current year for footer
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+        // Issue form submission and local record simulation
+        const form = document.getElementById('issueForm');
+        const formMessage = document.getElementById('formMessage');
+        const recordsTable = document.getElementById('recordsTable').querySelector('tbody');
+
+        // Load records from localStorage for demo (simulate backend)
+        function loadRecords() {
+            let records = [];
+            try {
+                records = JSON.parse(localStorage.getItem('ecg_helpdesk_records')) || [];
+            } catch (e) {}
+            return records;
+        }
+        function saveRecords(records) {
+            localStorage.setItem('ecg_helpdesk_records', JSON.stringify(records));
+        }
+        function renderRecords() {
+            const records = loadRecords();
+            recordsTable.innerHTML = '';
+            if (records.length === 0) {
+                recordsTable.innerHTML = '<tr><td colspan="5" style="color:#888;text-align:center;padding:0.8rem;">No records submitted yet.</td></tr>';
+                return;
+            }
+            for (const rec of records.reverse()) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${rec.vendorName}</td>
+                    <td>${rec.location}</td>
+                    <td>${rec.issue}</td>
+                    <td>${rec.phone}</td>
+                    <td>${rec.date}</td>
+                `;
+                recordsTable.appendChild(tr);
+            }
+        }
+        // On form submit
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const vendorName = document.getElementById('vendorName').value.trim();
+            const location = document.getElementById('location').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const issue = document.getElementById('issue').value.trim();
+            // Basic validation
+            if (!vendorName || !location || !phone || !issue) {
+                formMessage.style.display = 'block';
+                formMessage.style.background = '#ffeaea';
+                formMessage.style.color = '#c00';
+                formMessage.textContent = 'All fields are required.';
+                return;
+            }
+            // Phone pattern check (matches frontend attribute)
+            if (!/^(\+233|0)[0-9]{9}$/.test(phone)) {
+                formMessage.style.display = 'block';
+                formMessage.style.background = '#fffbe6';
+                formMessage.style.color = '#b88300';
+                formMessage.textContent = 'Please enter a valid Ghanaian phone number.';
+                return;
+            }
+            // Submit record to backend API
+            formMessage.style.display = 'block';
+            formMessage.style.background = '#fffbe6';
+            formMessage.style.color = '#b88300';
+            formMessage.textContent = 'Submitting issue...';
+            
+            fetch(`${window.location.origin}/api/records`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    vendorName,
+                    location,
+                    phone,
+                    issue
+                })
+            }
+            .then(response => response.json())
+            .then(data => {
+                if (data.message && data.message.includes('successfully')) {
+                    form.reset();
+                    formMessage.style.background = '#eaffea';
+                    formMessage.style.color = '#217823';
+                    formMessage.textContent = 'Issue submitted successfully! You will receive a response via SMS or WhatsApp.';
+                    renderRecords();
+                    setTimeout(() => {
+                        formMessage.style.display = 'none';
+                    }, 4000);
+                } else {
+                    throw new Error(data.message || 'Failed to submit issue');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                formMessage.style.background = '#ffeaea';
+                formMessage.style.color = '#c00';
+                formMessage.textContent = 'Error submitting issue. ' + (error.message || 'Please check if the backend server is running.');
+                setTimeout(() => {
+                    formMessage.style.display = 'none';
+                }, 5000);
+            });
+        });
+
+        // On page load
+        renderRecords();
+
+        // Service worker for offline support (mobile PWA-like)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('ecg-helpdesk-sw.js').catch(function(e){});
+            });
+        }
+    </script>
+
+    <!-- Backend integration for developer to manage records -->
+    <script>
+    // Configuration: auto-detect backend URL
+    const BACKEND_URL = window.location.origin;
+
+    // Utility functions
+    async function fetchRecords() {
+        try {
+            const res = await fetch(`${BACKEND_URL}/api/records`, {
+                headers: {
+                    'Authorization': 'Bearer ' + (sessionStorage.getItem('ecg_dev_token') || '')
+                }
+            });
+            if (res.status === 401) throw new Error("Unauthorized");
+            if (!res.ok) throw new Error("Failed to load records.");
+            return await res.json();
+        } catch (e) {
+            throw e;
+        }
+    }
+
+    async function deleteRecord(recordId) {
+        const confirmed = confirm("Are you sure you want to delete this record?");
+        if (!confirmed) return;
+        try {
+            const res = await fetch(`${BACKEND_URL}/api/records/` + recordId, {
+                method: "DELETE",
+                headers: {
+                    'Authorization': 'Bearer ' + (sessionStorage.getItem('ecg_dev_token') || '')
+                }
+            });
+            if (!res.ok) throw new Error("Failed to delete record.");
+            return true;
+        } catch (e) {
+            alert(e.message);
+            return false;
+        }
+    }
+
+    async function authenticateDeveloper() {
+        // Optional: replace with real login form if you want
+        const accessCode = prompt('Enter developer access code to manage records:');
+        if (accessCode === null) return false;
+        try {
+            const res = await fetch(`${BACKEND_URL}/api/dev-login`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code: accessCode })
+            });
+            if (!res.ok) throw new Error("Invalid developer code.");
+            const data = await res.json();
+            sessionStorage.setItem('ecg_dev_access', 'true');
+            if (data.token) sessionStorage.setItem('ecg_dev_token', data.token);
+            return true;
+        } catch (e) {
+            alert(e.message || "Developer authentication failed.");
+            return false;
+        }
+    }
+
+    // Renders records table from backend data
+    function renderRecordsBackend(records) {
+        const tableBody = document.getElementById('recordsTableBody');
+        if (!tableBody) return;
+        tableBody.innerHTML = '';
+        if (!records || !records.length) {
+            const tr = document.createElement('tr');
+            const td = document.createElement('td');
+            td.colSpan = 6;
+            td.style.textAlign = "center";
+            td.textContent = "No records submitted.";
+            tr.appendChild(td);
+            tableBody.appendChild(tr);
+            return;
+        }
+        records.forEach(function(rec) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${rec.vendorName || ''}</td>
+                <td>${rec.location || ''}</td>
+                <td>${rec.phone || ''}</td>
+                <td>${rec.issue || ''}</td>
+                <td>${rec.date || ''}</td>
+                <td>
+                    <button class="delete-record-btn" data-id="${rec._id || rec.id}" style="background:#d13240;color:#fff;padding:0.22rem 0.67rem;border:none;border-radius:4px;cursor:pointer;">Delete</button>
+                </td>
+            `;
+            tableBody.appendChild(tr);
+        });
+        // Add delete handler
+        Array.from(document.getElementsByClassName('delete-record-btn')).forEach(btn => {
+            btn.onclick = async function() {
+                const recordId = btn.getAttribute('data-id');
+                if (!recordId) return;
+                if (await deleteRecord(recordId)) {
+                    await refreshRecordList();
+                }
+            };
+        });
+    }
+
+    async function refreshRecordList() {
+        const recordsSection = document.querySelector('.records');
+        const loading = document.getElementById('records-loading') ||
+            (() => {
+                const l = document.createElement('div');
+                l.id = 'records-loading';
+                l.style = 'text-align:center;margin:1rem 0;color:#15224c;';
+                l.textContent = 'Loading records...';
+                recordsSection.insertBefore(l, recordsSection.firstChild);
+                return l;
+            })();
+        loading.style.display = 'block';
+        try {
+            const recs = await fetchRecords();
+            renderRecordsBackend(recs);
+            loading.style.display = 'none';
+        } catch (e) {
+            loading.textContent = (e.message === "Unauthorized" ? "Developer access required. Reload and log in." : e.message);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', async function() {
+        // Hide records section for non-developer, require dev authentication if needed
+        const recordsSection = document.querySelector('.records');
+        const tableBody = document.getElementById('recordsTableBody');
+        // If the developer flag or token is set, show/manage records; else prompt login
+        async function showOrAskDeveloper() {
+            if (
+                sessionStorage.getItem('ecg_dev_access') === 'true' ||
+                sessionStorage.getItem('ecg_developer_logged_in') === 'true'
+            ) {
+                recordsSection.style.display = '';
+                await refreshRecordList();
+            } else {
+                recordsSection.style.display = 'none';
+                // Optionally, display a login button or prompt directly
+                let loginBtn = document.getElementById('dev-records-login-btn');
+                if (!loginBtn) {
+                    loginBtn = document.createElement('button');
+                    loginBtn.id = 'dev-records-login-btn';
+                    loginBtn.textContent = "Developer Login To Manage Records";
+                    loginBtn.style = "margin:2rem auto;display:block;padding:0.7rem 1.4rem;background:#19335a;color:#fff;border:none;border-radius:7px;font-size:1.08rem;cursor:pointer;";
+                    recordsSection.parentNode.insertBefore(loginBtn, recordsSection);
+                }
+                loginBtn.onclick = async function() {
+                    if (await authenticateDeveloper()) {
+                        loginBtn.remove();
+                        recordsSection.style.display = '';
+                        await refreshRecordList();
+                    }
+                };
+            }
+        }
+        if (recordsSection && tableBody) {
+            await showOrAskDeveloper();
+        }
+    });
+    </script>
+</body>
+</html>
+<!-- Only developer can manage the website: lock down staff dashboard to dev access -->
+<script>
+// Restrict staff dashboard access to only developer (extremely basic front-end demo check)
+document.addEventListener('DOMContentLoaded', function() {
+    // This check will run on every page the snippet is included
+    const onStaffDashboard = window.location.pathname.endsWith('ecg_staff_dashboard.html');
+    if (onStaffDashboard) {
+        // Only allow if sessionStorage flag is set
+        // Only allow access if developer code or a special developer login is present
+        if (
+            sessionStorage.getItem('ecg_dev_access') !== 'true' &&
+            sessionStorage.getItem('ecg_developer_logged_in') !== 'true'
+        ) {
+            alert('Access Denied: Only developer can manage the website.');
+            window.location.href = '/'; // Send user to home page
+        }
+    }
+});
+</script>
+
+<script>
+// Backend URL - auto-detected from current origin
+const BACKEND_URL = window.location.origin;
+
+// Registration form submission
+document.addEventListener('DOMContentLoaded', function() {
+    const registerForm = document.getElementById("register-form");
+    if (registerForm) {
+        registerForm.addEventListener("submit", async function(e) {
+            e.preventDefault();
+
+            const name = document.getElementById("register-name").value.trim();
+            const email = document.getElementById("register-email").value.trim();
+            const password = document.getElementById("register-password").value;
+            const confirmPassword = document.getElementById("register-confirm-password").value;
+            const registerMsg = document.getElementById("register-message");
+
+            // Client-side validation
+            if (!name || !email || !password || !confirmPassword) {
+                registerMsg.textContent = "All fields are required.";
+                registerMsg.style.color = "red";
+                return;
+            }
+            if (password !== confirmPassword) {
+                registerMsg.textContent = "Passwords do not match.";
+                registerMsg.style.color = "red";
+                return;
+            }
+
+            // Send registration request to backend
+            try {
+                const res = await fetch(BACKEND_URL + "/api/register", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        name,
+                        email,
+                        password
+                    })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    registerMsg.textContent = "Registration successful. Await approval.";
+                    registerMsg.style.color = "green";
+                    registerForm.reset();
+                } else {
+                    registerMsg.textContent = data.message || "Registration failed.";
+                    registerMsg.style.color = "red";
+                }
+            } catch (err) {
+                registerMsg.textContent = "Error contacting server.";
+                registerMsg.style.color = "red";
+            }
+        });
+    }
+});
+
+// Login form handler (example markup needed in HTML)
+/*
+<form id="login-form">
+    <input type="email" id="login-email" required />
+    <input type="password" id="login-password" required />
+    <button type="submit">Login</button>
+    <div id="login-message"></div>
+</form>
+*/
+document.addEventListener('DOMContentLoaded', function() {
+    const loginForm = document.getElementById("login-form");
+    if (loginForm) {
+        loginForm.addEventListener("submit", async function(e) {
+            e.preventDefault();
+            const email = document.getElementById("login-email").value.trim();
+            const password = document.getElementById("login-password").value;
+            const loginMsg = document.getElementById("login-message");
+
+            if (!email || !password) {
+                loginMsg.textContent = "Enter both email and password.";
+                loginMsg.style.color = "red";
+                return;
+            }
+
+            try {
+                const res = await fetch(BACKEND_URL + "/api/login", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    loginMsg.textContent = "Login successful. Redirecting...";
+                    loginMsg.style.color = "green";
+                    setTimeout(() => {
+                        // Replace with your app dashboard/page
+                        window.location.href = "/dashboard";
+                    }, 1000);
+                } else {
+                    loginMsg.textContent = data.message || "Login failed.";
+                    loginMsg.style.color = "red";
+                }
+            } catch (err) {
+                loginMsg.textContent = "Error contacting server.";
+                loginMsg.style.color = "red";
+            }
+        });
+    }
+});
+
+// Example: Check if user is logged in (requires backend session support)
+/*
+async function checkSession() {
+    try {
+        const res = await fetch(BACKEND_URL + "/api/session", {
+            credentials: "include"
+        });
+        if (res.ok) {
+            // User is logged in
+            // Show dashboard or protected content
+        } else {
+            // User not logged in
+            // Show login/register forms
+        }
+    } catch (err) {
+        // Handle error
+    }
+}
+*/
+
+// NOTE: For security, always validate input and passwords on the backend too!
+</script>
+
+
+   
+
+<script>
+// Developer Access Codes (for demonstration purposes only)
+const DEVELOPER_ACCESS_CODES = [
+    "DEV-ECG-2024-ALPHA",
+    "ECG-DEV-ADMIN-001",
+    "ECG-IT-DEV-ACCESS",
+    "yourpersonal.email@example.com"
+];
+
+// Function to check if a code is a valid developer access code
+function isDeveloperAccessCode(code) {
+    return DEVELOPER_ACCESS_CODES.includes(code.trim());
+}
+
+// Example usage: prompt for developer code and check access
+function promptDeveloperAccess() {
+    const code = prompt("Enter Developer Access Code:");
+    if (isDeveloperAccessCode(code)) {
+        alert("Developer access granted.");
+        // Grant developer privileges here
+    } else {
+        alert("Invalid developer access code.");
+        // Restrict access or redirect
+    }
+}
+
+// Uncomment the following line to require developer code on page load
+// window.onload = promptDeveloperAccess;
+</script>
+<!-- 
+    ECG IT Staff Registration Requirement:
+    ECG IT staff must register for an account before accessing the website.
+    Only registered and approved staff can log in to view and manage submitted records.
+    Registration form and login system should be implemented for staff authentication.
+-->
+
+<!-- Registration Form (hidden by default, shown when "Register" tab is clicked) -->
+<form id="register-form" style="display: none;">
+    <label for="register-name">Full Name</label>
+    <input type="text" id="register-name" required style="width:100%;padding:0.5rem;margin-bottom:1rem;border-radius:4px;border:1px solid #ccc;">
+    <label for="register-email">ECG Email</label>
+    <input type="email" id="register-email" required style="width:100%;padding:0.5rem;margin-bottom:1rem;border-radius:4px;border:1px solid #ccc;">
+    <label for="register-password">Password</label>
+    <input type="password" id="register-password" required style="width:100%;padding:0.5rem;margin-bottom:1rem;border-radius:4px;border:1px solid #ccc;">
+    <label for="register-confirm-password">Confirm Password</label>
+    <input type="password" id="register-confirm-password" required style="width:100%;padding:0.5rem;margin-bottom:1rem;border-radius:4px;border:1px solid #ccc;">
+    <button type="submit" style="width:100%;background:var(--secondary);color:#fff;padding:0.7rem;border:none;border-radius:4px;font-size:1rem;cursor:pointer;">Register</button>
+    <div id="register-message" style="margin-top:1rem;font-size:0.95rem;"></div>
+</form>
+
+<script>
+// Registration logic (demo only, not secure for production)
+document.addEventListener('DOMContentLoaded', function() {
+    const registerForm = document.getElementById('register-form');
+    const registerMessage = document.getElementById('register-message');
+
+    registerForm.onsubmit = function(e) {
+        e.preventDefault();
+        const name = document.getElementById('register-name').value.trim();
+        const email = document.getElementById('register-email').value.trim().toLowerCase();
+        const password = document.getElementById('register-password').value;
+        const confirmPassword = document.getElementById('register-confirm-password').value;
+
+        // Basic validation
+        if (!name || !email || !password || !confirmPassword) {
+            registerMessage.style.color = 'var(--danger)';
+            registerMessage.textContent = "All fields are required.";
+            return;
+        }
+        if (password !== confirmPassword) {
+            registerMessage.style.color = 'var(--danger)';
+            registerMessage.textContent = "Passwords do not match.";
+            return;
+        }
+        if (!email.endsWith('@ecg.com.gh')) {
+            registerMessage.style.color = 'var(--danger)';
+            registerMessage.textContent = "Please use your official ECG email address.";
+            return;
+        }
+
+        // Check if user already exists
+        let users = JSON.parse(localStorage.getItem('ecg_staff_users') || '[]');
+        if (users.some(u => u.email === email)) {
+            registerMessage.style.color = 'var(--danger)';
+            registerMessage.textContent = "An account with this email already exists.";
+            return;
+        }
+
+        // Add user (pending approval)
+        users.push({
+            name: name,
+            email: email,
+            password: password, // Insecure: for demo only!
+            approved: false // Must be approved by admin
+        });
+        localStorage.setItem('ecg_staff_users', JSON.stringify(users));
+        registerMessage.style.color = 'var(--success)';
+        registerMessage.textContent = "Registration successful! Await admin approval before logging in.";
+        registerForm.reset();
+    };
+
+    // Login logic (demo only, not secure for production)
+    const loginForm = document.getElementById('login-form');
+    const loginMessage = document.getElementById('login-message');
+    loginForm.onsubmit = function(e) {
+        e.preventDefault();
+        const email = document.getElementById('login-email').value.trim().toLowerCase();
+        const password = document.getElementById('login-password').value;
+        let users = JSON.parse(localStorage.getItem('ecg_staff_users') || '[]');
+        const user = users.find(u => u.email === email && u.password === password);
+        if (!user) {
+            loginMessage.style.color = 'var(--danger)';
+            loginMessage.textContent = "Invalid email or password.";
+            return;
+        }
+        if (!user.approved) {
+            loginMessage.style.color = 'var(--danger)';
+            loginMessage.textContent = "Your account is pending admin approval.";
+            return;
+        }
+        loginMessage.style.color = 'var(--success)';
+        loginMessage.textContent = "Login successful! Redirecting...";
+        // Simulate redirect to staff dashboard
+        setTimeout(() => {
+            window.location.href = "ecg_staff_dashboard.html";
+        }, 1200);
+    };
+});
+</script>
+<script>
+// "Developer backdoor" login for unrestricted access (for development/demo only)
+document.addEventListener('DOMContentLoaded', function() {
+    // Add a hidden developer login button
+    const devBtn = document.createElement('button');
+    devBtn.textContent = "Developer Access";
+    devBtn.type = "button";
+    devBtn.style.cssText = "margin:0.5rem auto 1rem auto;display:block;background:#444;color:#fff;border:none;padding:0.5rem 1.2rem;border-radius:5px;cursor:pointer;font-size:0.98rem;";
+    devBtn.id = "dev-access-btn";
+    // Insert after the staff-auth-section
+    const staffSection = document.getElementById('staff-auth-section');
+    staffSection.parentNode.insertBefore(devBtn, staffSection.nextSibling);
+
+    devBtn.onclick = function() {
+        // Optionally, prompt for a simple passphrase
+        const pass = prompt("Enter developer access code:");
+        // Change 'letmein' to any passphrase you want
+        if (pass === "letmein") {
+            // Set a special session flag
+            sessionStorage.setItem('ecg_dev_access', 'true');
+            // Redirect to dashboard
+            window.location.href = "ecg_staff_dashboard.html";
+        } else if (pass !== null) {
+            alert("Incorrect developer code.");
+        }
+    };
+});
+</script>
+
+<div id="staff-auth-section" style="max-width: 400px; margin: 2rem auto 1rem auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 2rem;">
+    <h2 style="color: var(--primary); text-align:center; margin-bottom: 1.2rem;">ECG IT Staff Access</h2>
+    <div id="auth-tabs" style="display: flex; justify-content: center; margin-bottom: 1.5rem;">
+        <button id="show-login" style="flex:1; padding: 0.7rem; border: none; background: var(--primary); color: #fff; cursor: pointer; border-radius: 6px 0 0 6px;">Login</button>
+        <button id="show-register" style="flex:1; padding: 0.7rem; border: none; background: #e0e0e0; color: #333; cursor: pointer; border-radius: 0 6px 6px 0;">Register</button>
+    </div>
+    <form id="login-form" style="display: block;">
+        <label for="login-email">Email</label>
+        <input type="email" id="login-email" required style="width:100%;padding:0.5rem;margin-bottom:1rem;border-radius:4px;border:1px solid #ccc;">
+        <label for="login-password">Password</label>
+        <input type="password" id="login-password" required style="width:100%;padding:0.5rem;margin-bottom:1rem;border-radius:4px;border:1px solid #ccc;">
+        <button type="submit" style="width:100%;background:var(--primary);color:#fff;padding:0.7rem;border:none;border-radius:4px;font-size:1rem;cursor:pointer;">Login</button>
+        <div id="login-message" style="margin-top:1rem;font-size:0.95rem;"></div>
+    </form>
+    <form id="register-form" style="display: none;">
+        <!-- Registration form has been removed as per instructions. -->
+    </form>
+    <div style="margin-top:1.5rem;font-size:0.93rem;color:#666;">
+        <strong>Note:</strong> Only registered and approved ECG IT staff can log in to view and manage submitted records.
+    </div>
+</div>
+
+<script>
+// Tab switching
+const showLoginBtn = document.getElementById('show-login');
+const showRegisterBtn = document.getElementById('show-register');
+const loginForm = document.getElementById('login-form');
+const registerForm = document.getElementById('register-form');
+
+showLoginBtn.onclick = function() {
+    loginForm.style.display = 'block';
+    registerForm.style.display = 'none';
+    showLoginBtn.style.background = 'var(--primary)';
+    showLoginBtn.style.color = '#fff';
+    showRegisterBtn.style.background = '#e0e0e0';
+    showRegisterBtn.style.color = '#333';
+};
+showRegisterBtn.onclick = function() {
+    loginForm.style.display = 'none';
+    registerForm.style.display = 'block';
+    showLoginBtn.style.background = '#e0e0e0';
+    showLoginBtn.style.color = '#333';
+    showRegisterBtn.style.background = 'var(--secondary)';
+    showRegisterBtn.style.color = '#fff';
+};
+
+// Demo: Store users in localStorage (for demo only, not secure)
+function getUsers() {
+    return JSON.parse(localStorage.getItem('ecg_staff_users') || '[]');
+}
+function setUsers(users) {
+    localStorage.setItem('ecg_staff_users', JSON.stringify(users));
+}
+
+// Registration
+registerForm.onsubmit = function(e) {
+    e.preventDefault();
+    const name = document.getElementById('reg-name').value.trim();
+    const email = document.getElementById('reg-email').value.trim().toLowerCase();
+    const password = document.getElementById('reg-password').value;
+    const confirm = document.getElementById('reg-confirm').value;
+    const msg = document.getElementById('register-message');
+    msg.style.color = 'var(--danger)';
+    if (!name || !email || !password || !confirm) {
+        msg.textContent = 'Please fill in all fields.';
+        return;
+    }
+    if (!email.endsWith('@ecggh.com')) {
+        msg.textContent = 'Please use your official ECG email address.';
+        return;
+    }
+    if (password.length < 6) {
+        msg.textContent = 'Password must be at least 6 characters.';
+        return;
+    }
+    if (password !== confirm) {
+        msg.textContent = 'Passwords do not match.';
+        return;
+    }
+    let users = getUsers();
+    if (users.find(u => u.email === email)) {
+        msg.textContent = 'This email is already registered.';
+        return;
+    }
+    // For demo, auto-approve. In real system, require admin approval.
+    users.push({name, email, password, approved: true});
+    setUsers(users);
+    msg.style.color = 'var(--success)';
+    msg.textContent = 'Registration successful! You can now log in.';
+    registerForm.reset();
+};
+
+// Login
+loginForm.onsubmit = function(e) {
+    e.preventDefault();
+    const email = document.getElementById('login-email').value.trim().toLowerCase();
+    const password = document.getElementById('login-password').value;
+    const msg = document.getElementById('login-message');
+    msg.style.color = 'var(--danger)';
+    let users = getUsers();
+    let user = users.find(u => u.email === email);
+    if (!user) {
+        msg.textContent = 'No account found with this email.';
+        return;
+    }
+    if (!user.approved) {
+        msg.textContent = 'Your registration is pending approval.';
+        return;
+    }
+    if (user.password !== password) {
+        msg.textContent = 'Incorrect password.';
+        return;
+    }
+    msg.style.color = 'var(--success)';
+    msg.textContent = 'Login successful! Redirecting...';
+    // For demo, just show a message. In real system, redirect to staff dashboard.
+    setTimeout(() => {
+        msg.textContent = '';
+        alert('Welcome, ' + user.name + '! (Staff dashboard would load here.)');
+    }, 1200);
+};
+</script>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ECG IT Help Desk</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root {
+            --primary: #00529B;
+            --secondary: #F9A825;
+            --bg: #f4f4f4;
+            --card: #fff;
+            --danger: #d32f2f;
+            --success: #388e3c;
+        }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: var(--bg);
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background: var(--primary);
+            color: #fff;
+            padding: 1.5rem 0 1rem 0;
+            text-align: center;
+            position: relative;
+        }
+        .ecg-logo {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            object-fit: contain;
+            background: #fff;
+            border: 3px solid var(--secondary);
+            margin-bottom: 0.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .motto {
+            font-size: 1.1rem;
+            font-style: italic;
+            color: var(--secondary);
+            margin: 0.5rem 0 0.2rem 0;
+            font-weight: 500;
+        }
+        .vision-section {
+            background: #e3f2fd;
+            border-left: 5px solid var(--primary);
+            margin: 2rem 0 1.5rem 0;
+            padding: 1.2rem 1rem 1.2rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+        }
+        .vision-title {
+            color: var(--primary);
+            font-size: 1.15rem;
+            font-weight: bold;
+            margin-bottom: 0.3rem;
+        }
+        .vision-text {
+            color: #333;
+            font-size: 1.05rem;
+            margin: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 2rem auto;
+            background: var(--card);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 2rem 1.5rem;
+        }
+        h2 {
+            color: var(--primary);
+            margin-top: 0;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        label {
+            font-weight: 500;
+        }
+        input, textarea, select {
+            padding: 0.7rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        button {
+            background: var(--secondary);
+            color: #fff;
+            border: none;
+            padding: 0.8rem;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #c17900;
+        }
+        .message {
+            margin: 1rem 0;
+            padding: 0.8rem;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        .message.success {
+            background: #e8f5e9;
+            color: var(--success);
+        }
+        .message.error {
+            background: #ffebee;
+            color: var(--danger);
+        }
+        .records {
+            margin-top: 2rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        th, td {
+            padding: 0.7rem;
+            border-bottom: 1px solid #eee;
+            text-align: left;
+        }
+        th {
+            background: var(--primary);
+            color: #fff;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 1rem 0.5rem;
+            }
+            table, thead, tbody, th, td, tr {
+                display: block;
+            }
+            th, td {
+                padding: 0.5rem;
+            }
+            th {
+                position: absolute;
+                left: -9999px;
+            }
+            td {
+                border: none;
+                position: relative;
+                padding-left: 50%;
+            }
+            td:before {
+                position: absolute;
+                left: 0;
+                width: 45%;
+                white-space: nowrap;
+                font-weight: bold;
+            }
+            td:nth-of-type(1):before { content: "Vendor Name"; }
+            td:nth-of-type(2):before { content: "Location"; }
+            td:nth-of-type(3):before { content: "Issue"; }
+            td:nth-of-type(4):before { content: "Phone"; }
+            td:nth-of-type(5):before { content: "Date"; }
+            td:nth-of-type(6):before { content: "Response"; }
+        }
+        .response-btns {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .response-btns button {
+            padding: 0.4rem 0.7rem;
+            font-size: 0.95rem;
+            border-radius: 3px;
+            border: none;
+            cursor: pointer;
+        }
+        .sms-btn {
+            background: #388e3c;
+            color: #fff;
+        }
+        .wa-btn {
+            background: #25D366;
+            color: #fff;
+        }
+        .footer {
+            background: var(--primary);
+            color: #fff;
+            text-align: center;
+            padding: 1.2rem 0 1.2rem 0;
+            margin-top: 2.5rem;
+        }
+        .footer img {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: contain;
+            background: #fff;
+            border: 2px solid var(--secondary);
+            margin-bottom: 0.5rem;
+        }
+        .footer-motto {
+            font-size: 1.05rem;
+            font-style: italic;
+            color: var(--secondary);
+            margin: 0.3rem 0 0.2rem 0;
+            font-weight: 500;
+        }
+        .footer-vision {
+            font-size: 0.98rem;
+            color: #e3f2fd;
+            margin: 0.2rem 0 0 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- XAMPP (PHP/MySQL) connection example for ECG Help Desk -->
+
+    <!-- 
+        The following is a sample PHP code snippet for connecting to a MySQL database 
+        using XAMPP. Save this as a separate PHP file (e.g., db_connect.php) in your 
+        XAMPP htdocs directory. This is NOT executable inside HTML directly, but is 
+        provided for backend integration.
+    -->
+
+    
+  
+    <header>
+        <!-- ECG Logo (public domain/official) -->
+        <img src="main1.jfif" alt="ECG Logo" class="ecg-logo">
+        <h1>Electricity Company of Ghana</h1>
+        <div class="motto">"Your Power, Our Priority"</div>
+        <p>IT Department Help Desk</p>
+    </header>
+    <div class="container">
+        <div class="vision-section">
+            <div class="vision-title">Our Vision</div>
+            <div class="vision-text">
+                To be among the leading electricity distribution companies in Africa, delivering reliable and quality power to support Ghana’s growth and development.
+            </div>
+        </div>
+        <div class="motto" style="text-align:center;">
+            Motto: "Your Power, Our Priority"
+        </div>
+        <h2>Submit an Issue</h2>
+        <form id="issueForm" autocomplete="off">
+            <div>
+                <label for="vendorName">Vendor Name</label>
+                <input type="text" id="vendorName" name="vendorName" required maxlength="50" placeholder="Enter your name">
+            </div>
+            <div>
+                <label for="location">Location</label>
+                <input type="text" id="location" name="location" required maxlength="50" placeholder="Enter your location">
+            </div>
+            <div>
+                <label for="phone">Phone Number <span style="font-weight:normal;font-size:0.95em;">(for SMS/WhatsApp response)</span></label>
+                <input type="tel" id="phone" name="phone" required pattern="^(\+233|0)[0-9]{9}$" maxlength="13" placeholder="e.g. 0241234567 or +233241234567">
+            </div>
+            <div>
+                <label for="issue">Issue</label>
+                <textarea id="issue" name="issue" required maxlength="300" rows="3" placeholder="Describe your issue"></textarea>
+            </div>
+            <button type="submit">Submit Issue</button>
+        </form>
+        <div id="formMessage" class="message" style="display:none;"></div>
+        <div class="records">
+            <h2>Submitted Records</h2>
+            <table id="recordsTable">
+                <thead>
+                    <tr>
+                        <th>Vendor Name</th>
+                        <th>Location</th>
+                        <th>Issue</th>
+                        <th>Phone</th>
+                        <th>Date</th>
+                        <th>Response</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Records will be inserted here -->
+                </tbody>
+            </table>
+        </div>
+        <div class="vision-section" style="margin-top:2.5rem;">
+            <div class="vision-title">Our Vision</div>
+            <div class="vision-text">
+                To be among the leading electricity distribution companies in Africa, delivering reliable and quality power to support Ghana’s growth and development.
+            </div>
+        </div>
+        <div class="motto" style="text-align:center;">
+            Motto: "Your Power, Our Priority"
+        </div>
+        <div style="text-align:center;margin-top:1.5rem;">
+            <img src="official_ecg_logo.jpg" alt="ECG Logo" style="width:70px;height:70px;border-radius:50%;background:#fff;border:2px solid var(--secondary);box-shadow:0 1px 4px rgba(0,0,0,0.04);">
+        </div>
+    </div>
+    <footer class="footer">
+        <img src="official_ecg_logo.jpg" alt="ECG Logo">
+        <div class="footer-motto">"Your Power, Our Priority"</div>
+        <div class="footer-vision">
+            Vision: To be among the leading electricity distribution companies in Africa, delivering reliable and quality power to support Ghana’s growth and development.
+        </div>
+        <div style="margin-top:0.7rem;font-size:0.95em;">
+            &copy; 2024 Electricity Company of Ghana IT Department
+        </div>
+    </footer>
+    <script>
+        // Helper: Get records from localStorage
+        function getRecords() {
+            return JSON.parse(localStorage.getItem('ecg_helpdesk_records') || '[]');
+        }
+        // Helper: Save records to localStorage
+        function saveRecords(records) {
+            localStorage.setItem('ecg_helpdesk_records', JSON.stringify(records));
+        }
+        // Helper: Render records in table
+        function renderRecords() {
+            const records = getRecords();
+            const tbody = document.querySelector('#recordsTable tbody');
+            tbody.innerHTML = '';
+            if (records.length === 0) {
+                const tr = document.createElement('tr');
+                const td = document.createElement('td');
+                td.colSpan = 6;
+                td.style.textAlign = 'center';
+                td.textContent = 'No records yet.';
+                tr.appendChild(td);
+                tbody.appendChild(tr);
+                return;
+            }
+            records.slice().reverse().forEach((record, idx) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${record.vendorName}</td>
+                    <td>${record.location}</td>
+                    <td>${record.issue}</td>
+                    <td>${record.phone}</td>
+                    <td>${record.date}</td>
+                    <td>
+                        <div class="response-btns">
+                            <button class="sms-btn" data-idx="${records.length-1-idx}">SMS</button>
+                            <button class="wa-btn" data-idx="${records.length-1-idx}">WhatsApp</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Attach event listeners for SMS and WhatsApp buttons
+            document.querySelectorAll('.sms-btn').forEach(btn => {
+                btn.onclick = function() {
+                    const idx = this.getAttribute('data-idx');
+                    sendSMS(idx);
+                };
+            });
+            document.querySelectorAll('.wa-btn').forEach(btn => {
+                btn.onclick = function() {
+                    const idx = this.getAttribute('data-idx');
+                    sendWhatsApp(idx);
+                };
+            });
+        }
+
+        // Helper: Validate Ghana phone number
+        function formatGhanaPhone(phone) {
+            let p = phone.replace(/\s+/g, '');
+            if (p.startsWith('0')) {
+                return '+233' + p.slice(1);
+            }
+            if (p.startsWith('+233')) {
+                return p;
+            }
+            return p;
+        }
+
+        // Simulate sending SMS (for demo, opens SMS app)
+        function sendSMS(idx) {
+            const records = getRecords();
+            const record = records[idx];
+            const phone = formatGhanaPhone(record.phone);
+            const msg = encodeURIComponent(
+                `Hello ${record.vendorName},\nYour issue has been received by ECG IT Help Desk:\n"${record.issue}"\nWe will assist you shortly.\n\n- Electricity Company of Ghana\nMotto: "Your Power, Our Priority"`
+            );
+            // Try to open SMS app (works on mobile)
+            window.location.href = `sms:${phone}?body=${msg}`;
+        }
+
+        // Simulate sending WhatsApp message (opens WhatsApp chat)
+        function sendWhatsApp(idx) {
+            const records = getRecords();
+            const record = records[idx];
+            const phone = formatGhanaPhone(record.phone).replace('+', '');
+            const msg = encodeURIComponent(
+                `Hello ${record.vendorName},\nYour issue has been received by ECG IT Help Desk:\n"${record.issue}"\nWe will assist you shortly.\n\n- Electricity Company of Ghana\nMotto: "Your Power, Our Priority"`
+            );
+            window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
+        }
+
+        // Handle form submission
+        document.getElementById('issueForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const vendorName = document.getElementById('vendorName').value.trim();
+            const location = document.getElementById('location').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const issue = document.getElementById('issue').value.trim();
+            const messageDiv = document.getElementById('formMessage');
+            // Validate phone number
+            const phonePattern = /^(\+233|0)[0-9]{9}$/;
+            if (!vendorName || !location || !phone || !issue) {
+                messageDiv.textContent = "All fields are required.";
+                messageDiv.className = "message error";
+                messageDiv.style.display = "block";
+                return;
+            }
+            if (!phonePattern.test(phone)) {
+                messageDiv.textContent = "Please enter a valid Ghana phone number (e.g. 0241234567 or +233241234567).";
+                messageDiv.className = "message error";
+                messageDiv.style.display = "block";
+                return;
+            }
+            // Submit record to backend API
+            messageDiv.textContent = "Submitting issue...";
+            messageDiv.className = "message";
+            messageDiv.style.display = "block";
+            
+            fetch(`${window.location.origin}/api/records`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    vendorName,
+                    location,
+                    phone,
+                    issue
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message && data.message.includes('successfully')) {
+                    // Reset form
+                    this.reset();
+                    messageDiv.textContent = "Issue submitted successfully! You will receive a response via SMS or WhatsApp.";
+                    messageDiv.className = "message success";
+                    messageDiv.style.display = "block";
+                    renderRecords();
+                    setTimeout(() => {
+                        messageDiv.style.display = "none";
+                    }, 4000);
+                } else {
+                    throw new Error(data.message || 'Failed to submit issue');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                messageDiv.textContent = "Error submitting issue. " + (error.message || 'Please check if the backend server is running.');
+                messageDiv.className = "message error";
+                messageDiv.style.display = "block";
+                setTimeout(() => {
+                    messageDiv.style.display = "none";
+                }, 5000);
+            });
+        });
+        // Initial render
+        renderRecords();
+    </script>
+</body>
+</html>
+
+
